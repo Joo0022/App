@@ -1,1 +1,51 @@
-
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vaultline · Private team chat</title>
+<style>
+:root{--ink:#0e1b3d;--deep:#16295c;--violet:#7c5cff;--aqua:#2ee6c5;--coral:#ff6b81;--paper:#eef1ff}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;font:16px/1.5 "Segoe UI",system-ui,sans-serif;color:var(--paper);background:radial-gradient(circle at 15% 10%,#2b2f8f 0,transparent 45%),radial-gradient(circle at 90% 90%,#0b6b7a 0,transparent 40%),var(--ink)}
+.hide{display:none!important}
+.card{max-width:380px;margin:8vh auto;padding:32px;background:rgba(22,41,92,.75);border:1px solid rgba(124,92,255,.5);border-radius:20px;backdrop-filter:blur(8px)}
+.logo{display:flex;align-items:center;gap:12px;font-size:26px;font-weight:700;margin-bottom:6px}
+.logo svg{width:38px;height:38px}
+p.sub{margin:0 0 20px;opacity:.75}
+input{width:100%;padding:12px 14px;margin:6px 0;border-radius:12px;border:1px solid #3a4c8a;background:#0b1633;color:var(--paper);font:inherit}
+input:focus,button:focus-visible{outline:2px solid var(--aqua);outline-offset:1px}
+button{padding:12px 18px;border:0;border-radius:12px;font:inherit;font-weight:600;cursor:pointer;color:#06122e;background:linear-gradient(135deg,var(--aqua),#7cf3ff)}
+.card button{width:100%;margin-top:10px}
+.err{color:var(--coral);min-height:22px;margin-top:8px;font-size:14px}
+#chat{max-width:760px;height:100vh;margin:0 auto;display:flex;flex-direction:column;padding:12px}
+header{display:flex;align-items:center;justify-content:space-between;padding:10px 6px}
+.badge{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--aqua)}
+#log{flex:1;overflow-y:auto;padding:10px 4px;display:flex;flex-direction:column;gap:10px}
+.m{max-width:78%;padding:10px 14px;border-radius:16px 16px 16px 4px;background:var(--deep);border:1px solid #2f4290;word-wrap:break-word}
+.m.me{align-self:flex-end;border-radius:16px 16px 4px 16px;background:linear-gradient(135deg,var(--violet),#5a46d9);border-color:transparent}
+.m b{display:block;font-size:13px;color:var(--aqua)}.m.me b{color:#d9d2ff}
+.m i{display:block;font-size:11px;opacity:.6;font-style:normal;margin-top:2px}
+.m.bad{border-color:var(--coral)}
+form#send{display:flex;gap:8px;padding:10px 0}form#send input{margin:0}
+details{margin-top:16px;font-size:14px}summary{cursor:pointer;opacity:.8}
+a.out{background:none;border:1px solid #3a4c8a;color:var(--paper);padding:6px 12px;font-size:13px}
+</style></head><body>
+<main class="card" id="login">
+  <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#2ee6c5" stroke-width="2" stroke-linecap="round"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1.5" fill="#7c5cff"/></svg>Vaultline</div>
+  <p class="sub">Private chat for invited teammates only.</p>
+  <input id="u" placeholder="Username" autocomplete="username">
+  <input id="p" type="password" placeholder="Password" autocomplete="current-password">
+  <input id="k" type="password" placeholder="Team passphrase (encrypts messages)">
+  <button id="go">Unlock chat</button><div class="err" id="err"></div>
+  <details><summary>Owner: add or remove a teammate</summary>
+    <input id="ak" type="password" placeholder="Owner key">
+    <input id="au" placeholder="Teammate username">
+    <input id="ap" type="password" placeholder="Teammate password (10+ characters)">
+    <button id="add">Add teammate</button><button id="del" style="background:var(--coral)">Remove teammate</button><div class="err" id="aerr"></div>
+  </details>
+</main>
+<section id="chat" class="hide">
+  <header><div class="badge"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>End-to-end encrypted</div><button class="out" id="out">Sign out</button></header>
+  <div id="log"></div>
+  <form id="send"><input id="t" placeholder="Write a message" autocomplete="off" maxlength="1000"><button>Send</button></form>
+</section>
+<script src="app.js"></script>
+</body></html>
