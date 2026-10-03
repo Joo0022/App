@@ -5,25 +5,28 @@
 <style>
 :root{--bg:#0e0d1f;--panel:#15132c;--panel2:#1c1a3a;--line:#2a2750;--pink:#ff4d8d;--violet:#7a5cff;--amber:#ffb84d;--mint:#3dffc0;--text:#f3f1ff;--dim:#9b96c9}
 *{box-sizing:border-box}
-body{margin:0;height:100vh;overflow:hidden;font:15px/1.45 "Segoe UI",system-ui,-apple-system,sans-serif;color:var(--text);background:var(--bg)}
+html,body{height:100%}
+body{margin:0;overflow:hidden;font:15px/1.45 "Segoe UI",system-ui,-apple-system,sans-serif;color:var(--text);background:var(--bg)}
 .hide{display:none!important}
-#login{min-height:100vh;display:flex;align-items:center;justify-content:center;overflow-y:auto;
+#login{position:fixed;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;padding:24px 16px;
 background:radial-gradient(600px 400px at 10% 0%,rgba(255,77,141,.22),transparent),radial-gradient(700px 500px at 100% 100%,rgba(122,92,255,.28),transparent),var(--bg)}
-.card{max-width:400px;width:90%;margin:6vh 0;padding:34px 30px;background:rgba(21,19,44,.85);border:1px solid var(--line);border-radius:28px;box-shadow:0 20px 60px rgba(0,0,0,.45)}
+.card{width:100%;max-width:400px;margin:auto;padding:32px 28px;background:rgba(21,19,44,.9);border:1px solid var(--line);border-radius:28px;box-shadow:0 20px 60px rgba(0,0,0,.45)}
 .logo{display:flex;align-items:center;gap:14px;font-size:28px;font-weight:800;letter-spacing:-.5px}
 .logo .ico,.brand .ico{border-radius:16px;display:grid;place-items:center;background:linear-gradient(135deg,var(--pink),var(--violet));box-shadow:0 8px 24px rgba(255,77,141,.35)}
 .logo .ico{width:48px;height:48px}.logo svg{width:26px;height:26px}
-p.sub{margin:10px 0 22px;opacity:.7}
-input{width:100%;padding:14px 16px;margin:6px 0;border-radius:16px;border:1px solid var(--line);background:#0f0c2b;color:var(--text);font:inherit}
-input::placeholder{color:#8f89c9}
+p.sub{margin:10px 0 20px;color:var(--dim);font-size:14px}
+label{display:block;font-size:12px;font-weight:600;color:var(--dim);margin:12px 0 2px;letter-spacing:.4px;text-transform:uppercase}
+input{width:100%;padding:13px 16px;margin:4px 0;border-radius:14px;border:1px solid var(--line);background:#0f0c2b;color:var(--text);font:inherit}
+input::placeholder{color:#6f6aa3}
 input:focus,button:focus-visible{outline:2px solid var(--pink);outline-offset:2px}
-button{padding:13px 20px;border:0;border-radius:16px;font:inherit;font-weight:700;cursor:pointer;color:#fff;background:linear-gradient(135deg,var(--pink),var(--violet))}
+button{padding:13px 20px;border:0;border-radius:14px;font:inherit;font-weight:700;cursor:pointer;color:#fff;background:linear-gradient(135deg,var(--pink),var(--violet))}
 button:hover{filter:brightness(1.1)}
-.card button{width:100%;margin-top:12px}
-.err{color:#ff8fa8;min-height:22px;margin-top:8px;font-size:14px}
+.card button{width:100%;margin-top:14px}
+.err{color:#ff8fa8;min-height:20px;margin-top:8px;font-size:14px}
+.note{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:14px;font-size:12px;color:var(--mint)}
 details{margin-top:18px;font-size:14px;border-top:1px solid var(--line);padding-top:14px}
 summary{cursor:pointer;color:var(--amber);font-weight:600}
-#app{display:flex;height:100vh}
+#app{display:flex;height:100vh;height:100dvh}
 #sidebar{width:320px;flex:none;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column}
 #sidebar header{display:flex;align-items:center;gap:10px;padding:16px;border-bottom:1px solid var(--line)}
 .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:17px;flex:1}
@@ -61,7 +64,7 @@ background:radial-gradient(500px 350px at 85% 0%,rgba(122,92,255,.12),transparen
 form#send{display:flex;gap:10px;padding:14px;margin:0 16px 16px;background:var(--panel);border:1px solid var(--line);border-radius:99px}
 form#send input{margin:0;border:0;background:transparent;padding:10px 14px}
 form#send input:focus{outline:none}
-form#send button{width:44px;height:44px;flex:none;padding:0;border-radius:50%;display:grid;place-items:center}
+form#send button{width:44px;height:44px;flex:none;padding:0;margin:0;border-radius:50%;display:grid;place-items:center}
 form#send svg{width:20px;height:20px}
 ::-webkit-scrollbar{width:8px}::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px}
 @media(max-width:760px){
@@ -76,10 +79,14 @@ form#send svg{width:20px;height:20px}
   <div class="card">
     <div class="logo"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>Vaultline</div>
     <p class="sub">Private, encrypted chat for invited teammates only.</p>
-    <input id="u" placeholder="Username" autocomplete="username">
-    <input id="p" type="password" placeholder="Password" autocomplete="current-password">
-    <input id="k" type="password" placeholder="Team passphrase (encrypts messages)">
+    <label for="u">Username</label>
+    <input id="u" placeholder="Your username" autocomplete="username">
+    <label for="p">Password</label>
+    <input id="p" type="password" placeholder="Your password" autocomplete="current-password">
+    <label for="k">Team passphrase</label>
+    <input id="k" type="password" placeholder="Shared secret that encrypts messages">
     <button id="go">Unlock chat</button><div class="err" id="err"></div>
+    <div class="note">Messages are encrypted on your device</div>
     <details><summary>Owner: add or remove a teammate</summary>
       <input id="ak" type="password" placeholder="Owner key">
       <input id="au" placeholder="Teammate username">
