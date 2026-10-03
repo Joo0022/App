@@ -5,9 +5,9 @@ const app = express(), srv = http.createServer(app);
 const ADMIN = process.env.ADMIN_KEY || '';
 const DB = (process.env.DATA_DIR || '.') + '/users.json';
 const MSGDB = (process.env.DATA_DIR || '.') + '/messages.json';
-const CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME || '';
-const CLOUD_KEY = process.env.CLOUDINARY_API_KEY || '';
-const CLOUD_SECRET = process.env.CLOUDINARY_API_SECRET || '';
+const CLOUD_NAME = (process.env.CLOUDINARY_CLOUD_NAME || '').trim();
+const CLOUD_KEY = (process.env.CLOUDINARY_API_KEY || '').trim();
+const CLOUD_SECRET = (process.env.CLOUDINARY_API_SECRET || '').trim();
 let users = {}; try { users = JSON.parse(fs.readFileSync(DB)); } catch {}
 let rooms = {}; try { rooms = JSON.parse(fs.readFileSync(MSGDB)); } catch {}
 const saveUsers = () => fs.writeFileSync(DB, JSON.stringify(users));
@@ -57,7 +57,7 @@ app.post('/api/admin', (q, r) => {
   saveUsers(); r.json({ ok: 1, users: Object.keys(users) });
 });
 
-const upload = multer({ limits: { fileSize: 15 * 1024 * 1024 } });
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024 } });
 app.post('/api/upload', upload.single('file'), (q, r) => {
   const me = authed(q);
   if (!me) return r.status(401).json({ e: 'Session expired, please log in again.' });
@@ -87,12 +87,22 @@ app.post('/api/upload', upload.single('file'), (q, r) => {
     res.on('end', () => {
       try {
         const j = JSON.parse(data);
-        if (!j.secure_url) return r.status(502).json({ e: 'Upload failed.' });
+        if (!j.secure_url) {
+          const why = (j.error && j.error.message) ? j.error.message : ('HTTP ' + res.statusCode);
+          console.log('Cloudinary rejected upload:', why);
+          return r.status(502).json({ e: 'Cloudinary says: ' + why });
+        }
         r.json({ url: j.secure_url, name: q.file.originalname, size: q.file.size, mime: q.file.mimetype });
-      } catch { r.status(502).json({ e: 'Upload failed.' }); }
+      } catch (err) {
+        console.log('Bad reply from Cloudinary, HTTP', res.statusCode);
+        r.status(502).json({ e: 'Unreadable reply from Cloudinary (HTTP ' + res.statusCode + ').' });
+      }
     });
   });
-  req.on('error', () => r.status(502).json({ e: 'Upload failed.' }));
+  req.on('error', err => {
+    console.log('Could not reach Cloudinary:', err.message);
+    r.status(502).json({ e: 'Could not reach Cloudinary: ' + err.message });
+  });
   req.write(body); req.end();
 });
 
