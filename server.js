@@ -21,7 +21,7 @@ const filteredRooms = u => { const r = {}; for (const id of userRooms(u)) if (ro
 app.set('trust proxy', 1);
 app.use((q, r, n) => {
   r.set({
-    'Content-Security-Policy': "default-src 'self'; style-src 'unsafe-inline'; img-src 'self' https://res.cloudinary.com data:; connect-src 'self' wss: ws:; frame-ancestors 'none'",
+    'Content-Security-Policy': "default-src 'self'; style-src 'unsafe-inline'; img-src 'self' https://res.cloudinary.com data:; media-src 'self' https://res.cloudinary.com; connect-src 'self' wss: ws:; frame-ancestors 'none'",
     'Strict-Transport-Security': 'max-age=31536000',
     'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer'
   }); n();
