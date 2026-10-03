@@ -59,15 +59,42 @@ function tickSvg(seen) {
   return '<svg class="tick" viewBox="0 0 24 24" fill="none" stroke="' + (seen ? '#3dffc0' : 'currentColor') + '" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>';
 }
 
-function fileCard(file) {
-  const isImg = /^image\//.test(file.mime || '');
-  if (isImg) {
-    return '<a href="' + file.url + '" target="_blank" rel="noopener" style="display:block"><img src="' + file.url + '" alt="' + file.name.replace(/"/g, '') + '" style="max-width:220px;max-height:220px;border-radius:14px;display:block;margin-bottom:4px"></a>';
+function el(tag, css, text) { const e = document.createElement(tag); if (css) e.style.cssText = css; if (text !== undefined) e.textContent = text; return e; }
+
+function openViewer(url, name) {
+  const v = document.getElementById('viewer'), img = document.getElementById('viewerimg');
+  img.src = url; img.alt = name || ''; v.classList.add('show');
+}
+function closeViewer() {
+  const v = document.getElementById('viewer'); v.classList.remove('show');
+  document.getElementById('viewerimg').removeAttribute('src');
+}
+
+function buildFile(file) {
+  const mime = file.mime || '';
+  const wrap = el('div');
+  if (/^image\//.test(mime)) {
+    const img = el('img', 'max-width:220px;max-height:220px;border-radius:14px;display:block;margin-bottom:4px;cursor:zoom-in');
+    img.src = file.url; img.alt = file.name; img.loading = 'lazy';
+    img.onclick = () => openViewer(file.url, file.name);
+    wrap.append(img);
+  } else if (/^video\//.test(mime)) {
+    const vid = el('video', 'max-width:260px;width:100%;border-radius:14px;display:block;margin-bottom:4px;background:#000');
+    vid.src = file.url; vid.controls = true; vid.preload = 'metadata'; vid.setAttribute('playsinline', '');
+    wrap.append(vid);
+  } else if (/^audio\//.test(mime)) {
+    const aud = el('audio', 'width:230px;max-width:100%;display:block;margin-bottom:4px');
+    aud.src = file.url; aud.controls = true; aud.preload = 'metadata';
+    wrap.append(aud, el('div', 'font-size:11px;opacity:.7', file.name));
+  } else {
+    const a = el('a', 'display:flex;align-items:center;gap:10px;background:rgba(0,0,0,.18);border-radius:14px;padding:10px 12px;text-decoration:none;color:inherit;margin-bottom:4px');
+    a.href = file.url; a.target = '_blank'; a.rel = 'noopener';
+    const icon = el('span'); icon.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>';
+    const info = el('span', 'min-width:0');
+    info.append(el('span', 'display:block;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px', file.name), el('span', 'display:block;font-size:11px;opacity:.7', fmtSize(file.size)));
+    a.append(icon, info); wrap.append(a);
   }
-  return '<a href="' + file.url + '" target="_blank" rel="noopener" class="filecard" style="display:flex;align-items:center;gap:10px;background:rgba(0,0,0,.18);border-radius:14px;padding:10px 12px;text-decoration:none;color:inherit;margin-bottom:4px">' +
-    '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>' +
-    '<span style="min-width:0"><span style="display:block;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px">' + file.name + '</span>' +
-    '<span style="display:block;font-size:11px;opacity:.7">' + fmtSize(file.size) + '</span></span></a>';
+  return wrap;
 }
 
 async function paintLog() {
@@ -88,7 +115,7 @@ async function appendMsg(m, scroll) {
   n.textContent = m.u;
   box.append(n);
   if (m.file) {
-    const wrap = document.createElement('div'); wrap.innerHTML = fileCard(m.file); box.append(wrap);
+    box.append(buildFile(m.file));
   } else {
     const t = document.createElement('span'); t.textContent = text ?? 'Cannot decrypt (wrong team passphrase?)'; box.append(t);
   }
@@ -191,3 +218,7 @@ const admin = del => async () => {
 };
 $('#add').onclick = admin(false); $('#del').onclick = admin(true);
 $('#backbtn').onclick = () => $('#sidebar').classList.remove('collapsed');
+
+document.getElementById('viewerclose').onclick = closeViewer;
+document.getElementById('viewer').onclick = e => { if (e.target.id === 'viewer') closeViewer(); };
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeViewer(); });
