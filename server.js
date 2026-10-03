@@ -34,6 +34,13 @@ const blocked = ip => { const f = fails.get(ip); if (f && Date.now() - f.t > 6e5
 const fail = ip => { const f = fails.get(ip) || { n: 0, t: Date.now() }; f.n++; fails.set(ip, f); };
 const authed = q => { const h = q.headers.authorization || ''; const t = h.startsWith('Bearer ') ? h.slice(7) : ''; const s = sessions.get(t); return s && s.exp > Date.now() ? s.u : null; };
 
+app.post('/api/whoami', (q, r) => {
+  const { token } = q.body || {};
+  const sess = typeof token === 'string' ? sessions.get(token) : null;
+  if (!sess || sess.exp <= Date.now()) return r.status(401).json({ e: 'Session expired.' });
+  r.json({ u: sess.u, users: Object.keys(users) });
+});
+
 app.post('/api/login', (q, r) => {
   if (blocked(q.ip)) return r.status(429).json({ e: 'Too many attempts. Try again in 10 minutes.' });
   const { u, p } = q.body || {}, x = users[u];
@@ -57,6 +64,7 @@ app.post('/api/admin', (q, r) => {
   saveUsers(); r.json({ ok: 1, users: Object.keys(users) });
 });
 
+// ---- file upload: browser sends file to us, we relay it to Cloudinary, return the public URL ----
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024 } });
 app.post('/api/upload', upload.single('file'), (q, r) => {
   const me = authed(q);
@@ -106,8 +114,9 @@ app.post('/api/upload', upload.single('file'), (q, r) => {
   req.write(body); req.end();
 });
 
+// the server only ever relays encrypted text (and file metadata), never plaintext message content
 const wss = new WebSocketServer({ server: srv, maxPayload: 4096 });
-const online = new Map();
+const online = new Map(); // username -> Set of sockets
 
 function broadcastPresence() {
   const list = [...online.keys()];
@@ -130,6 +139,7 @@ wss.on('connection', ws => {
       return;
     }
     if (m.t === 'msg' && typeof m.c === 'string' && typeof m.iv === 'string' && typeof m.room === 'string') {
+      // room must be "general" or a private room this user belongs to
       if (m.room !== 'general' && !m.room.split('::').includes(ws.me)) return;
       if (m.room !== 'general' && !(m.room.split('::').length === 2 && m.room.split('::').every(u => users[u]))) return;
       const o = { id: crypto.randomUUID(), u: ws.me, c: m.c, iv: m.iv, ts: Date.now(), room: m.room };
