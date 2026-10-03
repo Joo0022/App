@@ -198,7 +198,37 @@ function connect() {
       }
     }
   };
-  ws.onclose = () => { if (tok) setTimeout(connect, 2000); };
+  ws.onclose = () => {
+    if (!tok) return;
+    setTimeout(async () => {
+      let r = null; try { r = await post('/api/whoami', { token: tok }); } catch {}
+      if (r && r.e) { try { sessionStorage.removeItem('vl_session'); } catch {} location.reload(); }
+      else connect();
+    }, 2000);
+  };
+}
+
+async function enterApp() {
+  $('#login').classList.add('hide'); $('#app').classList.remove('hide'); connect();
+}
+
+async function saveSession(passphrase) {
+  try {
+    sessionStorage.setItem('vl_session', JSON.stringify({ tok, u: me, k: passphrase }));
+  } catch {}
+}
+
+async function tryResume() {
+  let raw;
+  try { raw = sessionStorage.getItem('vl_session'); } catch { raw = null; }
+  if (!raw) return false;
+  let s; try { s = JSON.parse(raw); } catch { return false; }
+  if (!s || !s.tok || !s.u || !s.k) return false;
+  const r = await post('/api/whoami', { token: s.tok });
+  if (r.e || !r.u) { try { sessionStorage.removeItem('vl_session'); } catch {} return false; }
+  me = r.u; tok = s.tok; allUsers = r.users; key = await derive(s.k);
+  await enterApp();
+  return true;
 }
 
 $('#go').onclick = async () => {
@@ -207,10 +237,13 @@ $('#go').onclick = async () => {
   const r = await post('/api/login', { u: $('#u').value.trim(), p: $('#p').value });
   if (r.e) return $('#err').textContent = r.e;
   me = r.u; tok = r.token; allUsers = r.users; key = await derive($('#k').value);
+  await saveSession($('#k').value);
   $('#p').value = $('#k').value = '';
-  $('#login').classList.add('hide'); $('#app').classList.remove('hide'); connect();
+  await enterApp();
 };
-$('#out').onclick = () => { tok = null; if (ws) ws.close(); location.reload(); };
+$('#out').onclick = () => { tok = null; try { sessionStorage.removeItem('vl_session'); } catch {}; if (ws) ws.close(); location.reload(); };
+
+tryResume();
 const admin = del => async () => {
   const r = await post('/api/admin', { k: $('#ak').value, u: $('#au').value.trim(), p: $('#ap').value, del });
   $('#aerr').style.color = r.e ? '' : '#3dffc0';
